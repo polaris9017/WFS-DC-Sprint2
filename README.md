@@ -5,7 +5,6 @@
 
 ## npm 세팅
 ```
-npm install -g express-generator
 npm install express dotenv express-validator jsonwebtoken mysql2
 ```
 

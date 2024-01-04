@@ -8,11 +8,11 @@ app.listen(process.env.PORT, () => {
     console.log(`Server is running on port ${process.env.PORT}`);
 });
 
-const users = require('./routes/users');
-const books = require('./routes/books');
-const likes = require('./routes/likes');
-const carts = require('./routes/carts');
-const orders = require('./routes/orders');
+const users = require('./router/users');
+const books = require('./router/books');
+const likes = require('./router/likes');
+const carts = require('./router/carts');
+const orders = require('./router/orders');
 
 app.use('/', users);
 app.use('/books', books);

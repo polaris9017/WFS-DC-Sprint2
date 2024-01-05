@@ -69,7 +69,7 @@ const signin = (req, res) => {
             signin_success = false;
         } else salt = result[0].salt;
     });
-    
+
     // salt 값 가져오기 성공 시 로그인 시도
     if (signin_success) {
         conn.query(sql, values, (err, result) => {

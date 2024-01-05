@@ -8,6 +8,8 @@ const {
     resetPassword
 } = require('../controller/controller.users');
 
+router.use(express.json());
+
 router.post('/signup', signup);
 
 router.post('/signin', signin);

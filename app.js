@@ -10,12 +10,14 @@ app.listen(process.env.PORT, () => {
 
 const users = require('./router/users');
 const books = require('./router/books');
+const categories = require('./router/category');
 const likes = require('./router/likes');
 const carts = require('./router/carts');
 const orders = require('./router/orders');
 
 app.use('/', users);
 app.use('/books', books);
+app.use('/category', categories);
 app.use('/likes', likes);
 app.use('/carts', carts);
 app.use('/orders', orders);

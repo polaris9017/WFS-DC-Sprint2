@@ -8,3 +8,5 @@
 npm install express dotenv express-validator jsonwebtoken mysql2
 ```
 
+## ERD
+[링크 - dbdocs](https://dbdocs.io/moonrise917/WFS-DC-Sprint2)

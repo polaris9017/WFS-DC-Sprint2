@@ -51,7 +51,11 @@ const signup = (req, res) => {
     });
 
     // 계정 등록과 salt 저장 중 하나라도 실패 시 실패 메시지 전송
-    if (!register_success) return res.status(StatusCodes.BAD_REQUEST).send('Error registering new user please try again.');
+    if (!register_success) return res.status(StatusCodes.BAD_REQUEST).json({
+            status: StatusCodes.BAD_REQUEST,
+            message: 'Error registering please try again.'
+        }
+    );
 };
 
 const signin = (req, res) => {
@@ -93,10 +97,16 @@ const signin = (req, res) => {
                 });
                 return res.status(StatusCodes.OK).json(token);
             } else {
-                return res.status(StatusCodes.UNAUTHORIZED).send('Incorrect email or password');
+                return res.status(StatusCodes.UNAUTHORIZED).json({
+                    status: StatusCodes.UNAUTHORIZED,
+                    message: 'Incorrect email or password'
+                });
             }
         });
-    } else return res.status(StatusCodes.BAD_REQUEST).send('Error signing in please try again.'); // 로그인 토큰값과 salt 값 둘 중 하나라도 가져오기 실패 시 실패 메시지 전송
+    } else return res.status(StatusCodes.BAD_REQUEST).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: 'Error signing in please try again.'
+    }); // 로그인 토큰값과 salt 값 둘 중 하나라도 가져오기 실패 시 실패 메시지 전송
 };
 
 const requestResetPassword = (req, res) => {
@@ -106,14 +116,19 @@ const requestResetPassword = (req, res) => {
     conn.query(sql, email, (err, result) => {
         if (err) {
             console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).send('Error requesting reset password please try again.');
+            return res.status(StatusCodes.BAD_REQUEST).json({
+                status: StatusCodes.BAD_REQUEST,
+                message: 'Error requesting reset password please try again.'
+            });
         }
         const user = result[0];
         if (user) return res.status(StatusCodes.OK).json({
             email: email
         });
-        else return res.status(StatusCodes.UNAUTHORIZED).send('Incorrect email');
-
+        else return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Account not found'
+        });
     });
 };
 
@@ -122,13 +137,14 @@ const resetPassword = (req, res) => {
     const {hashedPassword, salt} = hash_password(password);
 
     let sql = 'UPDATE users SET password = ? WHERE email = ?';
-    let sql_salt = 'UPDATE user_salts SET salt = ? WHERE email = ?';
+    let sql_salt = 'UPDATE users_cred SET salt = ? WHERE email = ?';
     let values = [email, hashedPassword];
+    let reset_success = true;
 
     conn.query(sql_salt, [email, salt], (err, result) => {
         if (err) {
             console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).send('Error resetting password please try again.');
+            reset_success = false;
         }
         return res.status(StatusCodes.OK).end();
     });
@@ -136,10 +152,18 @@ const resetPassword = (req, res) => {
     conn.query(sql, values, (err, result) => {
         if (err) {
             console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).send('Error resetting password please try again.');
+            reset_success = false;
         }
-        if (result.affectedRows === 0) return res.status(StatusCodes.BAD_REQUEST).send('Incorrect email');
+        if (result.affectedRows === 0) return res.status(StatusCodes.BAD_REQUEST).json({
+            status: StatusCodes.BAD_REQUEST,
+            message: 'Incorrect email'
+        });
         else return res.status(StatusCodes.OK).json(result);
+    });
+    
+    if (!reset_success) return res.status(StatusCodes.BAD_REQUEST).json({
+        status: StatusCodes.BAD_REQUEST,
+        message: 'Error resetting password please try again.'
     });
 };
 

@@ -71,7 +71,10 @@ const signin = (req, res) => {
         if (err) {
             console.log(err);
             signin_success = false;
-        } else salt = result[0].salt;
+        } else {
+            if (result[0]) salt = result[0].salt;
+            else signin_success = false;
+        }
     });
 
     // salt 값 가져오기 성공 시 로그인 시도
@@ -160,7 +163,7 @@ const resetPassword = (req, res) => {
         });
         else return res.status(StatusCodes.OK).json(result);
     });
-    
+
     if (!reset_success) return res.status(StatusCodes.BAD_REQUEST).json({
         status: StatusCodes.BAD_REQUEST,
         message: 'Error resetting password please try again.'

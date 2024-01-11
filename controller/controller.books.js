@@ -2,21 +2,25 @@ const conn = require('../database');
 const {StatusCodes} = require("http-status-codes");
 
 const getBooks = (req, res) => {
-    const {catId, isNew} = req.query;
+    const {catId, isNew, limit, page} = req.query;
     let values = [];
+    let isTrue = (isNew === 'true');  // isNew 직접 대입 시 'false' 값도 true 로 인식하여 값 대조 방식 사용
 
     let sql = 'SELECT * FROM books';
 
-    if (catId && isNew) {
+    if (catId && isTrue) {
         sql += ' WHERE category_id = ? AND pub_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 MONTH) AND NOW()';
-        values = [catId, isNew];
+        values = [parseInt(catId)];
     } else if (catId) {
         sql += ' WHERE category_id = ?';
-        values = [catId];
-    } else if (isNew) {
+        values = [parseInt(catId)];
+    } else if (isTrue) {
         sql += ' WHERE pub_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 MONTH) AND NOW()';
         values = [isNew];
     }
+
+    sql += ' LIMIT ? OFFSET ?';
+    values.push(parseInt(limit), limit * (page - 1));
 
     if (values) {  // query 값이 존재할 경우
         conn.query(sql, values, (err, result) => {
@@ -44,9 +48,17 @@ const getBooks = (req, res) => {
 };
 
 const bookDetail = (req, res) => {
-    const {id} = parseInt(req.params);
+    let user_id = req.body;
+    let {book_id} = req.params.id;
 
-    let sql = 'SELECT * FROM books WHERE id = ?';
+    let sql = `SELECT *,
+                      (select count(*) from likes where book_id = books.id)                  as likes,
+                      (select exists(select * from likes where user_id = 1 and book_id = ?)) as liked,
+               from books
+                        left join category
+                                  on books.category_id = category.id
+               where books.id = ?`;
+    let values = [user_id, book_id, book_id];
 
     conn.query(sql, id, (err, result) => {
         if (err) {

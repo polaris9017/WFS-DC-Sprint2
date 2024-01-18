@@ -3,40 +3,27 @@ const {StatusCodes} = require("http-status-codes");
 
 const addOrder = async (req, res) => {
     const {items, delivery, total_amount, total_price, user_id, top_book_id} = req.body;
+    let values = [delivery['address'], delivery['recipient'], delivery['phone']];
+    let results;
+
+    // 배송지 정보 저장
     let sql = 'INSERT INTO delivery (address, recipient, phone) VALUES (?, ?, ?)';
-    let values = [delivery.address, delivery.recipient, delivery.phone];
-    let delivery_id, order_id;
+    results = await conn.query(sql, values);
+    let delivery_id = results.insertId;
 
-    conn.query(sql, values, (err, result) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
-        delivery_id = result.insertId;
-    });
-
+    // 주문 정보 저장
     sql = 'INSERT INTO orders (user_id, delivery_id, top_book_id, total_price) VALUES (?, ?, ?, ?)';
     values = [user_id, delivery_id, top_book_id, total_price];
+    results = await conn.query(sql, values);
+    let order_id = results.insertId;
 
-    conn.query(sql, values, (err, result) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
-        order_id = result.insertId;
-    });
-
+    // 주문 목록 저장
     sql = 'INSERT INTO order_list (order_id, book_id, amount) VALUES (?, ?, ?)';
     values.empty();
-    items.forEach((item) => values.push([order_id, item.book_id, item.amount]));
+    items.forEach((item) => values.push([order_id, item['book_id'], item['amount']]));
+    results = await conn.query(sql, [values]);
 
-    conn.query(sql, [values], (err, result) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
-        return res.status(StatusCodes.OK).json(result);
-    });
+    return res.status(StatusCodes.OK).json(results[0]);
 };
 
 const getOrderList = (req, res) => {

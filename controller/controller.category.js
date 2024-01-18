@@ -1,16 +1,13 @@
 const conn = require('../database');
 const {StatusCodes} = require("http-status-codes");
 
-const getAllCategories = (req, res) => {
+const getAllCategories = async (req, res) => {
     let sql = 'SELECT * FROM category';
+    let results;
 
-    conn.query(sql, (err, result) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
-        return res.status(StatusCodes.OK).json(result);
-    });
+    results = await conn.query(sql);
+
+    return res.status(StatusCodes.OK).json(results);
 };
 
 module.exports = {

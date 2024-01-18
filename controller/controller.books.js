@@ -1,9 +1,9 @@
 const conn = require('../database');
 const {StatusCodes} = require("http-status-codes");
 
-const getBooks = (req, res) => {
+const getBooks = async (req, res) => {
     const {catId, isNew, limit, page} = req.query;
-    let values = [];
+    let values = [], results;
     let isTrue = (isNew === 'true');  // isNew 직접 대입 시 'false' 값도 true 로 인식하여 값 대조 방식 사용
 
     let sql = 'SELECT * FROM books';
@@ -23,53 +23,37 @@ const getBooks = (req, res) => {
     values.push(parseInt(limit), limit * (page - 1));
 
     if (values) {  // query 값이 존재할 경우
-        conn.query(sql, values, (err, result) => {
-            if (err) {
-                console.log(err);
-                return res.status(StatusCodes.BAD_REQUEST).send(err);
-            }
-            if (result[0])
-                return res.status(StatusCodes.OK).json(result);
-            else
-                return res.status(StatusCodes.NOT_FOUND).json({
-                    status: StatusCodes.NOT_FOUND,
-                    message: 'No books found matches the category.'
-                });
-        });
+        results = await conn.query(sql, values);
+        if (results)
+            return res.status(StatusCodes.OK).json(results);
+        else
+            return res.status(StatusCodes.NOT_FOUND).json({
+                status: StatusCodes.NOT_FOUND,
+                message: 'No books found matches the category.'
+            });
     } else {  // query 값이 없으면 전체 조회
-        conn.query(sql, (err, result) => {
-            if (err) {
-                console.log(err);
-                return res.status(StatusCodes.BAD_REQUEST).send(err);
-            }
-            return res.status(StatusCodes.OK).json(result);
-        });
+        results = await conn.query(sql);
+        return res.status(StatusCodes.OK).json(results);
     }
 };
 
-const bookDetail = (req, res) => {
+const bookDetail = async (req, res) => {
     let user_id = req.body;
     let {book_id} = req.params.id;
+    let results;
 
     let sql = `SELECT *,
                       (select count(*) from likes where book_id = books.id)                  as likes,
-                      (select exists(select * from likes where user_id = 1 and book_id = ?)) as liked,
+                      (select exists(select * from likes where user_id = ? and book_id = ?)) as liked,
                from books
                         left join category
                                   on books.category_id = category.id
                where books.id = ?`;
     let values = [user_id, book_id, book_id];
 
-    conn.query(sql, id, (err, result) => {
-        if (err) {
-            console.log(err);
-            return res.status(StatusCodes.BAD_REQUEST).end();
-        }
-        if (result[0])
-            return res.status(StatusCodes.OK).json(result[0]);
-        else
-            return res.status(StatusCodes.NOT_FOUND).end();
-    });
+    results = await conn.query(sql, values);
+
+    return res.status(StatusCodes.OK).json(results);
 };
 
 module.exports = {

@@ -5,10 +5,11 @@ const {StatusCodes} = require("http-status-codes");
 
 dotenv.config();
 
-const addLike = (req, res) => {
+const addLike = async (req, res) => {
     const {book_id} = req.params;
     let sql = 'INSERT INTO likes (user_id, book_id) VALUES (?, ?)';
     let auth = verifyToken(req);
+    let results = [];
 
     if (auth instanceof jwt.TokenExpiredError) {
         return res.status(StatusCodes.UNAUTHORIZED).json({
@@ -17,22 +18,14 @@ const addLike = (req, res) => {
         });
     } else {
         let values = [auth['user_id'], book_id];
-
-        conn.query(sql, values, (err, result) => {
-            if (err) {
-                console.log(err);
-                return res.status(StatusCodes.BAD_REQUEST).end({
-                    status: StatusCodes.BAD_REQUEST,
-                    message: 'Error adding like please try again.'
-                });
-            }
-            return res.status(StatusCodes.OK).json(result);
-        });
+        results = await conn.query(sql, values);
+        return res.status(StatusCodes.OK).json(results);
     }
 };
 
-const deleteLike = (req, res) => {
+const deleteLike = async (req, res) => {
     const {book_id} = req.params;
+    let results;
 
     let sql = 'DELETE FROM likes WHERE user_id = ? AND book_id = ?';
 
@@ -45,17 +38,9 @@ const deleteLike = (req, res) => {
         });
     } else {
         let values = [auth['user_id'], book_id];
+        results = await conn.query(sql, values);
 
-        conn.query(sql, values, (err, result) => {
-            if (err) {
-                console.log(err);
-                return res.status(StatusCodes.BAD_REQUEST).end({
-                    status: StatusCodes.BAD_REQUEST,
-                    message: 'Error deleting like please try again.'
-                });
-            }
-            return res.status(StatusCodes.OK).json(result);
-        });
+        return res.status(StatusCodes.OK).end(results);
     }
 };
 

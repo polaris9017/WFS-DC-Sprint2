@@ -1,6 +1,7 @@
 const conn = require('../database');
 const {StatusCodes} = require("http-status-codes");
 const jwt = require("jsonwebtoken");
+const verifyToken = require("../auth");
 
 const addToCart = async (req, res) => {
     const {book_id, amount} = req.body;
@@ -55,16 +56,6 @@ const deleteCartItem = async (req, res) => {
     results = await conn.query(sql, cart_id);
     return res.status(StatusCodes.OK).json(results);
 };
-
-function verifyToken(req) {
-    try {
-        return jwt.verify(req.headers['authorization'], process.env.JWT_SECRET);
-    } catch (err) {
-        console.log('Exception occurred while verifying token');
-        console.log(err);
-        return err;
-    }
-}
 
 module.exports = {
     addToCart,

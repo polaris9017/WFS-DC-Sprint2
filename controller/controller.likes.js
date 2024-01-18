@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const conn = require('../database');
 const dotenv = require('dotenv');
 const {StatusCodes} = require("http-status-codes");
+const verifyToken = require("../auth");
 
 dotenv.config();
 
@@ -43,16 +44,6 @@ const deleteLike = async (req, res) => {
         return res.status(StatusCodes.OK).end(results);
     }
 };
-
-function verifyToken(req) {
-    try {
-        return jwt.verify(req.headers['authorization'], process.env.JWT_SECRET);
-    } catch (err) {
-        console.log('Exception occurred while verifying token');
-        console.log(err);
-        return err;
-    }
-}
 
 module.exports = {
     addLike,

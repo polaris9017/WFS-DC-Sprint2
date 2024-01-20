@@ -26,12 +26,12 @@ const addToCart = async (req, res) => {
 
 const getCartItems = async (req, res) => {
     const {selected} = req.body;
-    let results;
+    let results, values = []
 
     let sql = `SELECT cart.id, cart.book_id, title, summary, amount, price 
-                      FROM cart LEFT JOIN book 
-                      ON cart.book_id = book.id
-                      WHERE cart.user_id = ? AND user_id IN (?)`;
+                      FROM carts LEFT JOIN books 
+                      ON carts.book_id = books.id
+                      WHERE carts.user_id = ?`;
 
     let auth = verifyToken(req);
 
@@ -41,7 +41,13 @@ const getCartItems = async (req, res) => {
             message: 'Token expired'
         });
     } else {
-        let values = [auth['user_id'], selected];
+        values = [auth['user_id']];
+
+        if (selected) {  // 주문서 작성 시 선택한 장바구니 목록 조회
+            sql += ' AND user_id IN (?)';
+            values.push(selected);
+        }
+
         results = await conn.query(sql, values);
     }
 

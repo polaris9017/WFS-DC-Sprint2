@@ -57,9 +57,9 @@ const getCartItems = async (req, res) => {
 const deleteCartItem = async (req, res) => {
     const {cart_id} = req.params;
     let results;
-    let sql = 'DELETE FROM cart WHERE book_id = ?';
+    let sql = 'DELETE FROM carts WHERE book_id IN (?)';
 
-    results = await conn.query(sql, cart_id);
+    results = await conn.query(sql, [cart_id]);
     return res.status(StatusCodes.OK).json(results);
 };
 

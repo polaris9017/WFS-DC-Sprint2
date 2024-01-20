@@ -1,5 +1,7 @@
 const conn = require('../database');
 const {StatusCodes} = require("http-status-codes");
+const verifyToken = require("../auth");
+const jwt = require("jsonwebtoken");
 
 const getBooks = async (req, res) => {
     const {catId, isNew, limit, page} = req.query;
@@ -38,22 +40,50 @@ const getBooks = async (req, res) => {
 };
 
 const bookDetail = async (req, res) => {
-    let user_id = req.body;
-    let {book_id} = req.params.id;
-    let results;
+    let auth = verifyToken(req);
 
-    let sql = `SELECT *,
+    if (auth instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Token expired'
+        });
+    } else if (auth instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Invalid token'
+        });
+    } else if (auth instanceof ReferenceError) {
+        let {book_id} = req.params.id;
+        let results;
+
+        let sql = `SELECT *,
+                      (select count(*) from likes where book_id = books.id)                  as likes
+               from books
+                        left join category
+                                  on books.category_id = category.id
+               where books.id = ?`;
+        let values = [book_id];
+
+        results = await conn.query(sql, values);
+
+        return res.status(StatusCodes.OK).json(results);
+    } else {
+        let {book_id} = req.params.id;
+        let results;
+
+        let sql = `SELECT *,
                       (select count(*) from likes where book_id = books.id)                  as likes,
                       (select exists(select * from likes where user_id = ? and book_id = ?)) as liked,
                from books
                         left join category
                                   on books.category_id = category.id
                where books.id = ?`;
-    let values = [user_id, book_id, book_id];
+        let values = [auth['id'], book_id, book_id];
 
-    results = await conn.query(sql, values);
+        results = await conn.query(sql, values);
 
-    return res.status(StatusCodes.OK).json(results);
+        return res.status(StatusCodes.OK).json(results);
+    }
 };
 
 module.exports = {

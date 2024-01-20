@@ -26,12 +26,26 @@ const addOrder = async (req, res) => {
     return res.status(StatusCodes.OK).json(results[0]);
 };
 
-const getOrderList = (req, res) => {
-    res.send('주문 목록 조회');
+const getOrderList = async (req, res) => {
+    const user_id = req.body['email'];
+    let sql = `select orders.id, orders.total_price, orders.created_at,
+                      delivery.address, delivery.recipient, delivery.phone 
+                      from orders left join delivery 
+                      on orders.delivery_id = delivery.id
+                      where orders.user_id = ?`;
+
+    let [rows, fields] = await conn.query(sql, user_id);
+    return res.status(StatusCodes.OK).json(rows);
 };
 
-const getOrderDetail = (req, res) => {
-    res.send('주문 상세 상품 조회');
+const getOrderDetail = async (req, res) => {
+    const {orderId} = req.params;
+    let sql = `select book_id, title, author, price, amount
+                        from order_list left join books
+                        on order_list.book_id = books.id
+                        where order_list.order_id = ?`;
+    let [rows, fields] = await conn.query(sql, orderId);
+    return res.status(StatusCodes.OK).json(rows);
 };
 
 module.exports = {

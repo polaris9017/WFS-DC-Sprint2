@@ -45,25 +45,52 @@ const deleteCartItem = async (user_id, items) => {
 }
 
 const getOrderList = async (req, res) => {
-    const user_id = req.body['email'];
-    let sql = `select orders.id, orders.total_price, orders.created_at,
+    let auth = verifyToken(req);
+
+    if (auth instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Token expired'
+        });
+    } else if (auth instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Invalid token'
+        });
+    } else {
+        let sql = `select orders.id, orders.total_price, orders.created_at,
                       delivery.address, delivery.recipient, delivery.phone 
                       from orders left join delivery 
                       on orders.delivery_id = delivery.id
                       where orders.user_id = ?`;
 
-    let [rows, fields] = await conn.query(sql, user_id);
-    return res.status(StatusCodes.OK).json(rows);
+        let [rows, fields] = await conn.query(sql, auth['user_id']);
+        return res.status(StatusCodes.OK).json(rows);
+    }
 };
 
 const getOrderDetail = async (req, res) => {
-    const {orderId} = req.params;
-    let sql = `select book_id, title, author, price, amount
+    let auth = verifyToken(req);
+
+    if (auth instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Token expired'
+        });
+    } else if (auth instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Invalid token'
+        });
+    } else {
+        const {orderId} = req.params;
+        let sql = `select book_id, title, author, price, amount
                         from order_list left join books
                         on order_list.book_id = books.id
                         where order_list.order_id = ?`;
-    let [rows, fields] = await conn.query(sql, orderId);
-    return res.status(StatusCodes.OK).json(rows);
+        let [rows, fields] = await conn.query(sql, orderId);
+        return res.status(StatusCodes.OK).json(rows);
+    }
 };
 
 module.exports = {

@@ -17,6 +17,11 @@ const addLike = async (req, res) => {
             status: StatusCodes.UNAUTHORIZED,
             message: 'Token expired'
         });
+    } else if (auth instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Invalid token'
+        });
     } else {
         let values = [auth['user_id'], book_id];
         results = await conn.query(sql, values);
@@ -36,6 +41,11 @@ const deleteLike = async (req, res) => {
         return res.status(StatusCodes.UNAUTHORIZED).json({
             status: StatusCodes.UNAUTHORIZED,
             message: 'Token expired'
+        });
+    } else if (auth instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Invalid token'
         });
     } else {
         let values = [auth['user_id'], book_id];

@@ -15,6 +15,11 @@ const addToCart = async (req, res) => {
             status: StatusCodes.UNAUTHORIZED,
             message: 'Token expired'
         });
+    } else if (auth instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Invalid token'
+        });
     } else {
         let values = [auth['user_id'], book_id, amount];
 
@@ -40,6 +45,11 @@ const getCartItems = async (req, res) => {
             status: StatusCodes.UNAUTHORIZED,
             message: 'Token expired'
         });
+    } else if (auth instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Invalid token'
+        });
     } else {
         values = [auth['user_id']];
 
@@ -55,12 +65,26 @@ const getCartItems = async (req, res) => {
 };
 
 const deleteCartItem = async (req, res) => {
-    const {cart_id} = req.params;
-    let results;
-    let sql = 'DELETE FROM carts WHERE book_id IN (?)';
+    let auth = verifyToken(req);
 
-    results = await conn.query(sql, [cart_id]);
-    return res.status(StatusCodes.OK).json(results);
+    if (auth instanceof jwt.TokenExpiredError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Token expired'
+        });
+    } else if (auth instanceof jwt.JsonWebTokenError) {
+        return res.status(StatusCodes.UNAUTHORIZED).json({
+            status: StatusCodes.UNAUTHORIZED,
+            message: 'Invalid token'
+        });
+    } else {
+        const {cart_id} = req.params;
+        let results;
+        let sql = 'DELETE FROM carts WHERE book_id IN (?)';
+
+        results = await conn.query(sql, [cart_id]);
+        return res.status(StatusCodes.OK).json(results);
+    }
 };
 
 module.exports = {

@@ -7,8 +7,9 @@ const getBooks = async (req, res) => {
     const {catId, isNew, limit, page} = req.query;
     let values = [], results;
     let isTrue = (isNew === 'true');  // isNew 직접 대입 시 'false' 값도 true 로 인식하여 값 대조 방식 사용
+    let totalResults = {books: [], pagination: {}};
 
-    let sql = 'SELECT * FROM books';
+    let sql = 'SELECT SQL_CALC_FOUND_ROWS *, (SELECT COUNT(*) FROM likes WHERE book_id=books.id) AS likes FROM books';
 
     if (catId && isTrue) {
         sql += ' WHERE category_id = ? AND pub_date BETWEEN DATE_SUB(NOW(), INTERVAL 1 MONTH) AND NOW()';
@@ -27,16 +28,23 @@ const getBooks = async (req, res) => {
     if (values) {  // query 값이 존재할 경우
         results = await conn.query(sql, values);
         if (results)
-            return res.status(StatusCodes.OK).json(results);
+            totalResults.books = results;
         else
             return res.status(StatusCodes.NOT_FOUND).json({
                 status: StatusCodes.NOT_FOUND,
-                message: 'No books found matches the category.'
+                message: 'No books found.'
             });
     } else {  // query 값이 없으면 전체 조회
         results = await conn.query(sql);
-        return res.status(StatusCodes.OK).json(results);
+        totalResults.books = results;
     }
+
+    sql = 'SELECT found_rows()';
+
+    results = await conn.query(sql, values);
+    totalResults.pagination = {page: page, count: results[0]['found_rows()']};
+
+    return res.status(StatusCodes.OK).json(totalResults);
 };
 
 const bookDetail = async (req, res) => {
